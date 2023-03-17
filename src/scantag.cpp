@@ -1,7 +1,7 @@
 #include "exp.h"
 #include "regex_yaml.h"
 #include "regeximpl.h"
-#include "stream.h"
+#include "yamlstream.h"
 #include "yaml-cpp/exceptions.h"  // IWYU pragma: keep
 #include "yaml-cpp/mark.h"
 
@@ -20,8 +20,9 @@ const std::string ScanVerbatimTag(Stream& INPUT) {
     }
 
     int n = Exp::URI().Match(INPUT);
-    if (n <= 0)
+    if (n <= 0) {
       break;
+    }
 
     tag += INPUT.get(n);
   }
@@ -36,8 +37,9 @@ const std::string ScanTagHandle(Stream& INPUT, bool& canBeHandle) {
 
   while (INPUT) {
     if (INPUT.peek() == Keys::Tag) {
-      if (!canBeHandle)
+      if (!canBeHandle) {
         throw ParserException(firstNonWordChar, ErrorMsg::CHAR_IN_TAG_HANDLE);
+      }
       break;
     }
 
@@ -50,11 +52,13 @@ const std::string ScanTagHandle(Stream& INPUT, bool& canBeHandle) {
       }
     }
 
-    if (!canBeHandle)
+    if (!canBeHandle) {
       n = Exp::Tag().Match(INPUT);
+    }
 
-    if (n <= 0)
+    if (n <= 0) {
       break;
+    }
 
     tag += INPUT.get(n);
   }
@@ -67,15 +71,17 @@ const std::string ScanTagSuffix(Stream& INPUT) {
 
   while (INPUT) {
     int n = Exp::Tag().Match(INPUT);
-    if (n <= 0)
+    if (n <= 0) {
       break;
-
+    }
     tag += INPUT.get(n);
   }
 
-  if (tag.empty())
+  if (tag.empty()) {
     throw ParserException(INPUT.mark(), ErrorMsg::TAG_WITH_NO_SUFFIX);
+  }
 
   return tag;
+
 }
 }  // namespace YAML

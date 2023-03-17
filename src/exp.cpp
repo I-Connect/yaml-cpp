@@ -1,7 +1,7 @@
 #include <sstream>
 
 #include "exp.h"
-#include "stream.h"
+#include "yamlstream.h"
 #include "yaml-cpp/exceptions.h"  // IWYU pragma: keep
 
 namespace YAML {
@@ -14,14 +14,19 @@ unsigned ParseHex(const std::string& str, const Mark& mark) {
   unsigned value = 0;
   for (char ch : str) {
     int digit = 0;
-    if ('a' <= ch && ch <= 'f')
+    if ('a' <= ch && ch <= 'f') {
       digit = ch - 'a' + 10;
-    else if ('A' <= ch && ch <= 'F')
+    }
+    else if ('A' <= ch && ch <= 'F') {
       digit = ch - 'A' + 10;
-    else if ('0' <= ch && ch <= '9')
+    }
+    else if ('0' <= ch && ch <= '9') {
       digit = ch - '0';
-    else
+    }
+    else {
       throw ParserException(mark, ErrorMsg::INVALID_HEX);
+
+    }
 
     value = (value << 4) + digit;
   }
@@ -29,7 +34,11 @@ unsigned ParseHex(const std::string& str, const Mark& mark) {
   return value;
 }
 
-std::string Str(unsigned ch) { return std::string(1, static_cast<char>(ch)); }
+std::string Str(unsigned ch) {
+  return std::string(1, static_cast<char>(ch));
+}
+
+
 
 // Escape
 // . Translates the next 'codeLength' characters into a hex number and returns
@@ -38,9 +47,12 @@ std::string Str(unsigned ch) { return std::string(1, static_cast<char>(ch)); }
 std::string Escape(Stream& in, int codeLength) {
   // grab string
   std::string str;
-  for (int i = 0; i < codeLength; i++)
+  for (int i = 0; i < codeLength; i++) {
     str += in.get();
+  } {
 
+
+  }
   // get the value
   unsigned value = ParseHex(str, in.mark());
 
@@ -52,12 +64,12 @@ std::string Escape(Stream& in, int codeLength) {
   }
 
   // now break it up into chars
-  if (value <= 0x7F)
+  if (value <= 0x7F) {
     return Str(value);
-
-  if (value <= 0x7FF)
+  }
+  if (value <= 0x7FF) {
     return Str(0xC0 + (value >> 6)) + Str(0x80 + (value & 0x3F));
-
+  }
   if (value <= 0xFFFF)
     return Str(0xE0 + (value >> 12)) + Str(0x80 + ((value >> 6) & 0x3F)) +
            Str(0x80 + (value & 0x3F));
@@ -79,10 +91,11 @@ std::string Escape(Stream& in) {
   char ch = in.get();
 
   // first do single quote, since it's easier
-  if (escape == '\'' && ch == '\'')
+  if (escape == '\'' && ch == '\'') {
     return "\'";
+  }
 
-  // now do the slash (we're not gonna check if it's a slash - you better pass
+  // now do the slash (we're not go {nna check if it's a slash - you better pass
   // one!)
   switch (ch) {
     case '0':

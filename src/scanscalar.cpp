@@ -4,7 +4,7 @@
 
 #include "exp.h"
 #include "regeximpl.h"
-#include "stream.h"
+#include "yamlstream.h"
 #include "yaml-cpp/exceptions.h"  // IWYU pragma: keep
 
 namespace YAML {
@@ -106,8 +106,9 @@ std::string ScanScalar(Stream& INPUT, ScanScalarParams& params) {
     }
 
     // do we remove trailing whitespace?
-    if (params.fold == FOLD_FLOW)
+    if (params.fold == FOLD_FLOW) {
       scalar.erase(lastNonWhitespaceChar);
+    }
 
     // ********************************
     // Phase #2: eat line ending
@@ -152,8 +153,9 @@ std::string ScanScalar(Stream& INPUT, ScanScalarParams& params) {
     // was this an empty line?
     bool nextEmptyLine = Exp::Break().Matches(INPUT);
     bool nextMoreIndented = Exp::Blank().Matches(INPUT);
-    if (params.fold == FOLD_BLOCK && foldedNewlineCount == 0 && nextEmptyLine)
+    if (params.fold == FOLD_BLOCK && foldedNewlineCount == 0 && nextEmptyLine) {
       foldedNewlineStartedMoreIndented = moreIndented;
+    }
 
     // for block scalars, we always start with a newline, so we should ignore it
     // (not fold or keep)
@@ -228,7 +230,8 @@ std::string ScanScalar(Stream& INPUT, ScanScalarParams& params) {
       } else if (pos + 1 < scalar.size()) {
         scalar.erase(pos + 2);
       }
-    } break;
+    }
+    break;
     case STRIP: {
       std::size_t pos = scalar.find_last_not_of('\n');
       if (lastEscapedChar != std::string::npos) {
@@ -241,7 +244,8 @@ std::string ScanScalar(Stream& INPUT, ScanScalarParams& params) {
       } else if (pos < scalar.size()) {
         scalar.erase(pos + 1);
       }
-    } break;
+    }
+    break;
     default:
       break;
   }

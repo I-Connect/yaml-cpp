@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "stream.h"
+#include "yamlstream.h"
 
 #ifndef YAML_PREFETCH_SIZE
-#define YAML_PREFETCH_SIZE 2048
+  #define YAML_PREFETCH_SIZE 2048
 #endif
 
 #define S_ARRAY_SIZE(A) (sizeof(A) / sizeof(*(A)))
@@ -47,79 +47,97 @@ enum UtfIntroCharType {
 };
 
 static bool s_introFinalState[] = {
-    false,  // uis_start
-    false,  // uis_utfbe_b1
-    false,  // uis_utf32be_b2
-    false,  // uis_utf32be_bom3
-    true,   // uis_utf32be
-    true,   // uis_utf16be
-    false,  // uis_utf16be_bom1
-    false,  // uis_utfle_bom1
-    false,  // uis_utf16le_bom2
-    false,  // uis_utf32le_bom3
-    true,   // uis_utf16le
-    true,   // uis_utf32le
-    false,  // uis_utf8_imp
-    false,  // uis_utf16le_imp
-    false,  // uis_utf32le_imp3
-    false,  // uis_utf8_bom1
-    false,  // uis_utf8_bom2
-    true,   // uis_utf8
-    true,   // uis_error
+  false,  // uis_start
+  false,  // uis_utfbe_b1
+  false,  // uis_utf32be_b2
+  false,  // uis_utf32be_bom3
+  true,   // uis_utf32be
+  true,   // uis_utf16be
+  false,  // uis_utf16be_bom1
+  false,  // uis_utfle_bom1
+  false,  // uis_utf16le_bom2
+  false,  // uis_utf32le_bom3
+  true,   // uis_utf16le
+  true,   // uis_utf32le
+  false,  // uis_utf8_imp
+  false,  // uis_utf16le_imp
+  false,  // uis_utf32le_imp3
+  false,  // uis_utf8_bom1
+  false,  // uis_utf8_bom2
+  true,   // uis_utf8
+  true,   // uis_error
 };
 
 static UtfIntroState s_introTransitions[][uictMax] = {
-    // uict00,           uictBB,           uictBF,           uictEF,
-    // uictFE,           uictFF,           uictAscii,        uictOther
-    {uis_utfbe_b1, uis_utf8, uis_utf8, uis_utf8_bom1, uis_utf16be_bom1,
-     uis_utfle_bom1, uis_utf8_imp, uis_utf8},
-    {uis_utf32be_b2, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
-     uis_utf16be, uis_utf8},
-    {uis_utf32be, uis_utf8, uis_utf8, uis_utf8, uis_utf32be_bom3, uis_utf8,
-     uis_utf8, uis_utf8},
-    {uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf32be, uis_utf8,
-     uis_utf8},
-    {uis_utf32be, uis_utf32be, uis_utf32be, uis_utf32be, uis_utf32be,
-     uis_utf32be, uis_utf32be, uis_utf32be},
-    {uis_utf16be, uis_utf16be, uis_utf16be, uis_utf16be, uis_utf16be,
-     uis_utf16be, uis_utf16be, uis_utf16be},
-    {uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf16be, uis_utf8,
-     uis_utf8},
-    {uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf16le_bom2, uis_utf8,
-     uis_utf8, uis_utf8},
-    {uis_utf32le_bom3, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
-     uis_utf16le, uis_utf16le, uis_utf16le},
-    {uis_utf32le, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
-     uis_utf16le, uis_utf16le, uis_utf16le},
-    {uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
-     uis_utf16le, uis_utf16le, uis_utf16le},
-    {uis_utf32le, uis_utf32le, uis_utf32le, uis_utf32le, uis_utf32le,
-     uis_utf32le, uis_utf32le, uis_utf32le},
-    {uis_utf16le_imp, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
-     uis_utf8, uis_utf8},
-    {uis_utf32le_imp3, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
-     uis_utf16le, uis_utf16le, uis_utf16le},
-    {uis_utf32le, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
-     uis_utf16le, uis_utf16le, uis_utf16le},
-    {uis_utf8, uis_utf8_bom2, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
-     uis_utf8},
-    {uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
-     uis_utf8},
-    {uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
-     uis_utf8},
+  // uict00,           uictBB,           uictBF,           uictEF,
+  // uictFE,           uictFF,           uictAscii,        uictOther
+  { uis_utfbe_b1, uis_utf8, uis_utf8, uis_utf8_bom1, uis_utf16be_bom1,
+    uis_utfle_bom1, uis_utf8_imp, uis_utf8
+  },
+  { uis_utf32be_b2, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
+    uis_utf16be, uis_utf8
+  },
+  { uis_utf32be, uis_utf8, uis_utf8, uis_utf8, uis_utf32be_bom3, uis_utf8,
+    uis_utf8, uis_utf8
+  },
+  { uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf32be, uis_utf8,
+    uis_utf8
+  },
+  { uis_utf32be, uis_utf32be, uis_utf32be, uis_utf32be, uis_utf32be,
+    uis_utf32be, uis_utf32be, uis_utf32be
+  },
+  { uis_utf16be, uis_utf16be, uis_utf16be, uis_utf16be, uis_utf16be,
+    uis_utf16be, uis_utf16be, uis_utf16be
+  },
+  { uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf16be, uis_utf8,
+    uis_utf8
+  },
+  { uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf16le_bom2, uis_utf8,
+    uis_utf8, uis_utf8
+  },
+  { uis_utf32le_bom3, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
+    uis_utf16le, uis_utf16le, uis_utf16le
+  },
+  { uis_utf32le, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
+    uis_utf16le, uis_utf16le, uis_utf16le
+  },
+  { uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
+    uis_utf16le, uis_utf16le, uis_utf16le
+  },
+  { uis_utf32le, uis_utf32le, uis_utf32le, uis_utf32le, uis_utf32le,
+    uis_utf32le, uis_utf32le, uis_utf32le
+  },
+  { uis_utf16le_imp, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
+    uis_utf8, uis_utf8
+  },
+  { uis_utf32le_imp3, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
+    uis_utf16le, uis_utf16le, uis_utf16le
+  },
+  { uis_utf32le, uis_utf16le, uis_utf16le, uis_utf16le, uis_utf16le,
+    uis_utf16le, uis_utf16le, uis_utf16le
+  },
+  { uis_utf8, uis_utf8_bom2, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
+    uis_utf8
+  },
+  { uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
+    uis_utf8
+  },
+  { uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8, uis_utf8,
+    uis_utf8
+  },
 };
 
 static char s_introUngetCount[][uictMax] = {
-    // uict00, uictBB, uictBF, uictEF, uictFE, uictFF, uictAscii, uictOther
-    {0, 1, 1, 0, 0, 0, 0, 1}, {0, 2, 2, 2, 2, 2, 2, 2},
-    {3, 3, 3, 3, 0, 3, 3, 3}, {4, 4, 4, 4, 4, 0, 4, 4},
-    {1, 1, 1, 1, 1, 1, 1, 1}, {1, 1, 1, 1, 1, 1, 1, 1},
-    {2, 2, 2, 2, 2, 0, 2, 2}, {2, 2, 2, 2, 0, 2, 2, 2},
-    {0, 1, 1, 1, 1, 1, 1, 1}, {0, 2, 2, 2, 2, 2, 2, 2},
-    {1, 1, 1, 1, 1, 1, 1, 1}, {1, 1, 1, 1, 1, 1, 1, 1},
-    {0, 2, 2, 2, 2, 2, 2, 2}, {0, 3, 3, 3, 3, 3, 3, 3},
-    {4, 4, 4, 4, 4, 4, 4, 4}, {2, 0, 2, 2, 2, 2, 2, 2},
-    {3, 3, 0, 3, 3, 3, 3, 3}, {1, 1, 1, 1, 1, 1, 1, 1},
+  // uict00, uictBB, uictBF, uictEF, uictFE, uictFF, uictAscii, uictOther
+  {0, 1, 1, 0, 0, 0, 0, 1}, {0, 2, 2, 2, 2, 2, 2, 2},
+  {3, 3, 3, 3, 0, 3, 3, 3}, {4, 4, 4, 4, 4, 0, 4, 4},
+  {1, 1, 1, 1, 1, 1, 1, 1}, {1, 1, 1, 1, 1, 1, 1, 1},
+  {2, 2, 2, 2, 2, 0, 2, 2}, {2, 2, 2, 2, 0, 2, 2, 2},
+  {0, 1, 1, 1, 1, 1, 1, 1}, {0, 2, 2, 2, 2, 2, 2, 2},
+  {1, 1, 1, 1, 1, 1, 1, 1}, {1, 1, 1, 1, 1, 1, 1, 1},
+  {0, 2, 2, 2, 2, 2, 2, 2}, {0, 3, 3, 3, 3, 3, 3, 3},
+  {4, 4, 4, 4, 4, 4, 4, 4}, {2, 0, 2, 2, 2, 2, 2, 2},
+  {3, 3, 0, 3, 3, 3, 3, 3}, {1, 1, 1, 1, 1, 1, 1, 1},
 };
 
 inline UtfIntroCharType IntroCharTypeOf(std::istream::int_type ch) {
@@ -152,10 +170,10 @@ inline UtfIntroCharType IntroCharTypeOf(std::istream::int_type ch) {
 inline char Utf8Adjust(unsigned long ch, unsigned char lead_bits,
                        unsigned char rshift) {
   const unsigned char header =
-      static_cast<unsigned char>(((1 << lead_bits) - 1) << (8 - lead_bits));
+    static_cast<unsigned char>(((1 << lead_bits) - 1) << (8 - lead_bits));
   const unsigned char mask = (0xFF >> (lead_bits + 1));
   return static_cast<char>(
-      static_cast<unsigned char>(header | ((ch >> rshift) & mask)));
+           static_cast<unsigned char>(header | ((ch >> rshift) & mask)));
 }
 
 inline void QueueUnicodeCodepoint(std::deque<char>& q, unsigned long ch) {
@@ -183,21 +201,22 @@ inline void QueueUnicodeCodepoint(std::deque<char>& q, unsigned long ch) {
 }
 
 Stream::Stream(std::istream& input)
-    : m_input(input),
-      m_mark{},
-      m_charSet{},
-      m_readahead{},
-      m_pPrefetched(new unsigned char[YAML_PREFETCH_SIZE]),
-      m_nPrefetchedAvailable(0),
-      m_nPrefetchedUsed(0) {
+  : m_input(input),
+    m_mark{},
+    m_charSet{},
+    m_readahead{},
+    m_pPrefetched(new unsigned char[YAML_PREFETCH_SIZE]),
+    m_nPrefetchedAvailable(0),
+    m_nPrefetchedUsed(0) {
   using char_traits = std::istream::traits_type;
 
-  if (!input)
+  if (!input) {
     return;
+  }
 
   // Determine (or guess) the character-set by reading the BOM, if any.  See
   // the YAML specification for the determination algorithm.
-  char_traits::int_type intro[4]{};
+  char_traits::int_type intro[4] {};
   int nIntroUsed = 0;
   UtfIntroState state = uis_start;
   for (; !s_introFinalState[state];) {
@@ -209,8 +228,9 @@ Stream::Stream(std::istream& input)
     if (nUngets > 0) {
       input.clear();
       for (; nUngets > 0; --nUngets) {
-        if (char_traits::eof() != intro[--nIntroUsed])
+        if (char_traits::eof() != intro[--nIntroUsed]) {
           input.putback(char_traits::to_char_type(intro[nIntroUsed]));
+        }
       }
     }
     state = newState;
@@ -240,7 +260,11 @@ Stream::Stream(std::istream& input)
   ReadAheadTo(0);
 }
 
-Stream::~Stream() { delete[] m_pPrefetched; }
+Stream::~Stream() {
+  delete[] m_pPrefetched;
+}
+
+
 
 char Stream::peek() const {
   if (m_readahead.empty()) {
@@ -276,8 +300,10 @@ std::string Stream::get(int n) {
   std::string ret;
   if (n > 0) {
     ret.reserve(static_cast<std::string::size_type>(n));
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
       ret += get();
+    } {
+    }
   }
   return ret;
 }
@@ -285,8 +311,10 @@ std::string Stream::get(int n) {
 // eat
 // . Eats 'n' characters and updates our position.
 void Stream::eat(int n) {
-  for (int i = 0; i < n; i++)
+  for (int i = 0; i < n; i++) {
     get();
+  } {
+  }
 }
 
 void Stream::AdvanceCurrent() {
@@ -320,9 +348,9 @@ bool Stream::_ReadAheadTo(size_t i) const {
   }
 
   // signal end of stream
-  if (!m_input.good())
+  if (!m_input.good()) {
     m_readahead.push_back(Stream::eof());
-
+  }
   return m_readahead.size() > i;
 }
 
@@ -407,7 +435,7 @@ unsigned char Stream::GetNextByte() const {
   if (m_nPrefetchedUsed >= m_nPrefetchedAvailable) {
     std::streambuf* pBuf = m_input.rdbuf();
     m_nPrefetchedAvailable = static_cast<std::size_t>(
-        pBuf->sgetn(ReadBuffer(m_pPrefetched), YAML_PREFETCH_SIZE));
+                               pBuf->sgetn(ReadBuffer(m_pPrefetched), YAML_PREFETCH_SIZE));
     m_nPrefetchedUsed = 0;
     if (!m_nPrefetchedAvailable) {
       m_input.setstate(std::ios_base::eofbit);
