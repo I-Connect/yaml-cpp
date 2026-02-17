@@ -29,6 +29,10 @@ inline bool RegEx::Matches(const Stream& in) const {
 
 template <typename Source>
 inline bool RegEx::Matches(const Source& source) const {
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201103L) || __cplusplus >= 201103L)
+  static_assert(!std::is_same<Source, const char*>::value,
+#endif
+    "Must use StringCharSource instead of plain C-string");
   return Match(source) >= 0;
 }
 
